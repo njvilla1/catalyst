@@ -20,7 +20,7 @@ from catalyst.models import *
 def all_profiles_serialized(request):
 	prof_set = []
 	for prof in Profile.objects.all():
-		prof_set.append({"pk":prof.pk, "info_blurb":prof.info_blurb, "pic_url":request.META['HTTP_HOST']+'/'+prof.photo.url})
+		prof_set.append({"pk":prof.pk, "info_blurb":prof.info_blurb, "pic_url":'http://'+request.META['HTTP_HOST']+'/'+prof.photo.url})
 		#for photos, url is relative - still need to add domain to front of string
 	return HttpResponse(json.dumps(prof_set))
 
