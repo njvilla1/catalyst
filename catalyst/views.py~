@@ -20,7 +20,7 @@ from catalyst.models import *
 def all_profiles_serialized(request):
 	prof_set = []
 	for prof in Profile.objects.all():
-		prof_set.append({"pk":prof.pk, "info_blurb":prof.info_blurb, "pic_url":prof.photo.url})
+		prof_set.append({"pk":prof.pk, "info_blurb":prof.info_blurb, "pic_url":'http://'+request.META['HTTP_HOST']+'/'+prof.photo.url})
 		#for photos, url is relative - still need to add domain to front of string
 	return HttpResponse(json.dumps(prof_set))
 
@@ -31,11 +31,10 @@ def register_user(request):
 	password1 = request.POST['password']
 	ib = request.POST['blurb']
 	img = request.POST['image']
-	user = User.objects.get(username = username1)
-	#authenticate(username=username1, password=password1)
 	registration = ''
-	if user is not None:
+	if User.objects.filter(username=username).count():
 		registration = 'user_exists'
+		
 	else:
 		print "username does not exist, attempting to register user"
 		u = User(username=username1)#, email=em)
@@ -45,9 +44,9 @@ def register_user(request):
 		print 'attempting to save image to directory'
 		img_filename = prof.user.username + '.jpg'
 		prof.photo = ContentFile(b64decode(img), img_filename)
-		prof.save()	
+		prof.save()
+		user = authenticate(username=username1, password=password1)
 	
-	user = authenticate(username=username1, password=password1)
 	if registration is '':
 		if user is not None:
 			registration= 'success'

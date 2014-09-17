@@ -31,10 +31,10 @@ def register_user(request):
 	password1 = request.POST['password']
 	ib = request.POST['blurb']
 	img = request.POST['image']
-	user = User.objects.get(username = username1)
 	registration = ''
-	if user is not None:
+	if User.objects.filter(username=username1).count():
 		registration = 'user_exists'
+		
 	else:
 		print "username does not exist, attempting to register user"
 		u = User(username=username1)#, email=em)
