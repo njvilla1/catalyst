@@ -15,6 +15,8 @@ from base64 import b64decode
 from django.core.files.base import ContentFile
 import json
 from catalyst.models import *
+import os
+from django.conf import settings
 
 # Create your views here.
 def all_profiles_serialized(request):
@@ -23,6 +25,42 @@ def all_profiles_serialized(request):
 		prof_set.append({"pk":prof.pk, "info_blurb":prof.info_blurb, "pic_url":'http://'+request.META['HTTP_HOST']+'/'+prof.photo.url})
 		#for photos, url is relative - still need to add domain to front of string
 	return HttpResponse(json.dumps(prof_set))
+
+@csrf_exempt
+def edit_info_blurb(request):
+	print "user is trying to edit info blurb"
+	username1 = request.POST['username']
+	ib = request.POST['edit_blurb']
+	print "username is = ", username1
+	prof = Profile.objects.get(user__username = username1)
+	prof.info_blurb = ib
+	prof.save()
+	json_data = json.dumps({"edit_blurb": "success"})
+	return HttpResponse(json_data, content_type="application/json")
+
+@csrf_exempt
+def get_user_info(request, username):
+	prof = Profile.objects.get(user__username = username)
+	json_data = json.dumps({"pk":prof.pk, "info_blurb":prof.info_blurb, "pic_url":'http://'+request.META['HTTP_HOST']+'/'+prof.photo.url})
+	return HttpResponse(json_data, content_type="application/json")
+
+@csrf_exempt
+def edit_pic(request):
+        print "user is trying to edit profile pic"
+        username1 = request.POST['username']
+        img = request.POST['image']
+        prof = Profile.objects.get(user__username=username1)
+
+        #Check if profile photo file already exists, if it does, delete it
+        #before saving new photo of the same name
+        fullname = os.path.join(settings.MEDIA_ROOT[:-6], prof.photo.url)
+        if os.path.exists(fullname):
+                os.remove(fullname)
+
+        prof.photo = ContentFile(b64decode(img), prof.user.username+'.jpg')
+        prof.save()
+        json_data = json.dumps({"edit_pic":"success"})
+        return HttpResponse(json_data, content_type="application/json")
 
 @csrf_exempt
 def register_user(request):
