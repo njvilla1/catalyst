@@ -10,6 +10,7 @@ from django.core.files.base import ContentFile
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from datetime import datetime, date, time
+import math, decimal
 from PIL import Image
 from base64 import b64decode
 from django.core.files.base import ContentFile
@@ -22,7 +23,18 @@ from django.conf import settings
 def all_profiles_serialized(request):
 	prof_set = []
 	for prof in Profile.objects.all():
-		prof_set.append({"pk":prof.pk, "info_blurb":prof.info_blurb, "pic_url":'http://'+request.META['HTTP_HOST']+'/'+prof.photo.url})
+		prof_set.append({"pk":prof.pk, "info_blurb":prof.info_blurb, \
+			"pic_url":'http://'+request.META['HTTP_HOST']+'/'+prof.photo.url})
+		#for photos, url is relative - still need to add domain to front of string
+	return HttpResponse(json.dumps(prof_set))
+
+def nearby_profiles(request, username):
+	prof_set = []
+	user = Profile.objects.get(user__username = username)
+	for prof in Profile.objects.all():
+		if (latlong_distance(user.latitude, user.longitude, prof.latitude, prof.longitude) < 100):
+			prof_set.append({"pk":prof.pk, "info_blurb":prof.info_blurb, \
+			"pic_url":'http://'+request.META['HTTP_HOST']+'/'+prof.photo.url})
 		#for photos, url is relative - still need to add domain to front of string
 	return HttpResponse(json.dumps(prof_set))
 
@@ -41,7 +53,8 @@ def edit_info_blurb(request):
 @csrf_exempt
 def get_user_info(request, username):
 	prof = Profile.objects.get(user__username = username)
-	json_data = json.dumps({"pk":prof.pk, "info_blurb":prof.info_blurb, "pic_url":'http://'+request.META['HTTP_HOST']+'/'+prof.photo.url})
+	json_data = json.dumps({"pk":prof.pk, "info_blurb":prof.info_blurb, \
+		"pic_url":'http://'+request.META['HTTP_HOST']+'/'+prof.photo.url})
 	return HttpResponse(json_data, content_type="application/json")
 
 @csrf_exempt
@@ -67,18 +80,21 @@ def register_user(request):
 	print "user is trying to register"
 	username1 = request.POST['username']
 	password1 = request.POST['password']
+	lat = request.POST['userLatitude']
+	longi = request.POST['userLongitude']
 	ib = request.POST['blurb']
 	img = request.POST['image']
 	registration = ''
 	if User.objects.filter(username=username1).count():
 		registration = 'user_exists'
-		
 	else:
 		print "username does not exist, attempting to register user"
 		u = User(username=username1)#, email=em)
 		u.set_password(password1)
 		u.save()
-		prof = Profile(info_blurb = ib, pub_date = datetime.now(), user = u) #, photo = ...)
+		prof = Profile(info_blurb = ib, pub_date = datetime.now(), user = u)
+		prof.latitude = lat
+		prof.longitude = longi
 		print 'attempting to save image to directory'
 		img_filename = prof.user.username + '.jpg'
 		prof.photo = ContentFile(b64decode(img), img_filename)
@@ -90,9 +106,8 @@ def register_user(request):
 			registration= 'success'
 		else:
 			registration= 'failure'
-	print registration
 	json_data = json.dumps({"registration":registration})
-	
+	print json_data
 	return HttpResponse(json_data, content_type="application/json")
 
 @csrf_exempt
@@ -100,6 +115,8 @@ def authenticate_user(request):
 	print "user is trying to authenticate"
 	username1 = request.POST['username']
 	password1 = request.POST['password']
+	lat = request.POST['userLatitude']
+	longi = request.POST['userLongitude']
 	user = authenticate(username=username1, password=password1)
 	authentication = ''
 	if user is not None:
@@ -117,9 +134,27 @@ def authenticate_user(request):
 		print "user was not found in database"
 		authentication = 'failure'
 	
+	#Set user latitude and longitude
+	prof = Profile.objects.get(user__username = username1)
+	prof.latitude = lat
+	prof.longitude = longi
+	prof.save()
 	json_data = json.dumps({"authentication": authentication})
-	
+	print json_data
 	return HttpResponse(json_data, content_type="application/json")
 
-
-
+def latlong_distance(lat1, long1, lat2, long2):
+    # Convert latitude and longitude to 
+    # spherical coordinates in radians.
+	degrees_to_radians = math.pi/180.0
+	# phi = 90 - latitude
+	phi1 = (decimal.Decimal(90.0) - lat1)*decimal.Decimal(degrees_to_radians)
+	phi2 = (decimal.Decimal(90.0) - lat2)*decimal.Decimal(degrees_to_radians)
+	# theta = longitude
+	theta1 = long1*decimal.Decimal(degrees_to_radians)
+	theta2 = long2*decimal.Decimal(degrees_to_radians)
+	# Compute spherical distance from spherical coordinates.
+	cos = (math.sin(phi1)*math.sin(phi2)*math.cos(theta1 - theta2) + math.cos(phi1)*math.cos(phi2))
+	arc = math.acos( cos )
+	arc = decimal.Decimal(arc) * decimal.Decimal(20925524.9)
+	return arc
