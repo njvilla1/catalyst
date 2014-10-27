@@ -26,7 +26,7 @@ def all_profiles_serialized(request):
 		prof_set.append({"pk":prof.pk, "info_blurb":prof.info_blurb, \
 			"pic_url":'http://'+request.META['HTTP_HOST']+'/'+prof.photo.url})
 		#for photos, url is relative - still need to add domain to front of string
-	return HttpResponse(json.dumps(prof_set))
+	return HttpResponse(json.dumps(prof_set), content_type="application/json")
 
 def nearby_profiles(request, username):
 	prof_set = []
@@ -36,7 +36,20 @@ def nearby_profiles(request, username):
 			prof_set.append({"pk":prof.pk, "info_blurb":prof.info_blurb, \
 			"pic_url":'http://'+request.META['HTTP_HOST']+'/'+prof.photo.url})
 		#for photos, url is relative - still need to add domain to front of string
-	return HttpResponse(json.dumps(prof_set))
+	return HttpResponse(json.dumps(prof_set), content_type="application/json")
+
+@csrf_exempt
+def update_location(request):
+	print "trying to update location for user"
+	username = request.POST['username']
+	print username, " got username"
+	user = Profile.objects.get(user__username = username)
+	user.latitude = decimal.Decimal(request.POST['userLatitude'])
+	user.longitude = decimal.Decimal(request.POST['userLongitude'])
+	print username, user.latitude, user.longitude
+	user.save()
+	json_data = json.dumps({"update_status": "success"})
+	return HttpResponse(json_data, content_type="application/json")
 
 @csrf_exempt
 def edit_info_blurb(request):
@@ -69,7 +82,6 @@ def edit_pic(request):
         fullname = os.path.join(settings.MEDIA_ROOT[:-6], prof.photo.url)
         if os.path.exists(fullname):
                 os.remove(fullname)
-
         prof.photo = ContentFile(b64decode(img), prof.user.username+'.jpg')
         prof.save()
         json_data = json.dumps({"edit_pic":"success"})
