@@ -10,7 +10,7 @@ from django.core.files.base import ContentFile
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from datetime import datetime, date, time
-import calendar
+import calendar, time
 import math, decimal
 from PIL import Image
 from base64 import b64decode
