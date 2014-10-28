@@ -98,7 +98,7 @@ def edit_pic(request):
         fullname = os.path.join(settings.MEDIA_ROOT[:-6], prof.photo.url)
         if os.path.exists(fullname):
                 os.remove(fullname)
-        prof.photo = ContentFile(b64decode(img), prof.user.username+'_'+calendar.timegm(time.gmtime())+'.jpg')
+        prof.photo = ContentFile(b64decode(img), prof.user.username+'_'+str(calendar.timegm(time.gmtime()))+'.jpg')
         prof.save()
         json_data = json.dumps({"edit_pic":"success"})
         return HttpResponse(json_data, content_type="application/json")
@@ -124,7 +124,7 @@ def register_user(request):
 		prof.latitude = lat
 		prof.longitude = longi
 		print 'attempting to save image to directory'
-		img_filename = prof.user.username+'_'+calendar.timegm(time.gmtime())+'.jpg'
+		img_filename = prof.user.username+'_'+str(calendar.timegm(time.gmtime()))+'.jpg'
 		prof.photo = ContentFile(b64decode(img), img_filename)
 		prof.save()
 		user = authenticate(username=username1, password=password1)
