@@ -124,7 +124,7 @@ def register_user(request):
 		prof.latitude = lat
 		prof.longitude = longi
 		print 'attempting to save image to directory'
-		img_filename = prof.user.username + '.jpg'
+		img_filename = prof.user.username+'_'+calendar.timegm(time.gmtime())+'.jpg'
 		prof.photo = ContentFile(b64decode(img), img_filename)
 		prof.save()
 		user = authenticate(username=username1, password=password1)
