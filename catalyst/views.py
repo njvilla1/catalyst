@@ -10,6 +10,7 @@ from django.core.files.base import ContentFile
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from datetime import datetime, date, time
+import calendar
 import math, decimal
 from PIL import Image
 from base64 import b64decode
@@ -92,13 +93,12 @@ def edit_pic(request):
         username1 = request.POST['username']
         img = request.POST['image']
         prof = Profile.objects.get(user__username=username1)
-
         #Check if profile photo file already exists, if it does, delete it
         #before saving new photo of the same name
         fullname = os.path.join(settings.MEDIA_ROOT[:-6], prof.photo.url)
         if os.path.exists(fullname):
                 os.remove(fullname)
-        prof.photo = ContentFile(b64decode(img), prof.user.username+'.jpg')
+        prof.photo = ContentFile(b64decode(img), prof.user.username+'_'+calendar.timegm(time.gmtime())+'.jpg')
         prof.save()
         json_data = json.dumps({"edit_pic":"success"})
         return HttpResponse(json_data, content_type="application/json")
