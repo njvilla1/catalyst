@@ -33,7 +33,7 @@ def nearby_profiles(request, username):
 	prof_set = []
 	user = Profile.objects.get(user__username = username)
 	for prof in Profile.objects.filter(enabled = True).order_by('-user__last_login'):
-		if (latlong_distance(user.latitude, user.longitude, prof.latitude, prof.longitude) < 100):
+		if (latlong_distance(user.latitude, user.longitude, prof.latitude, prof.longitude) < 250):
 			prof_set.append({"pk":prof.pk, "info_blurb":prof.info_blurb, \
 			"pic_url":'http://'+request.META['HTTP_HOST']+'/'+prof.photo.url})
 		#for photos, url is relative - still need to add domain to front of string
