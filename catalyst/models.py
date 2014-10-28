@@ -7,7 +7,8 @@ class Profile(models.Model):
 	photo = models.ImageField(upload_to='catalyst/profile_photos', null=True)
 	pub_date = models.DateTimeField('date published')
 	latitude = models.DecimalField(max_digits=11, decimal_places=8, default=0.0)
-	longitude = models.DecimalField(max_digits=11, decimal_places=8, default=0.0)	
+	longitude = models.DecimalField(max_digits=11, decimal_places=8, default=0.0)
+	enabled = models.BooleanField(default=True)
 	def __str__(self):
 		return str(self.pk) + '_' + str(self.user.username)
 	def prof_id(self):

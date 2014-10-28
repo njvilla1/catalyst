@@ -31,7 +31,7 @@ def all_profiles_serialized(request):
 def nearby_profiles(request, username):
 	prof_set = []
 	user = Profile.objects.get(user__username = username)
-	for prof in Profile.objects.all():
+	for prof in Profile.objects.filter(enabled = True).order_by('-user__last_login'):
 		if (latlong_distance(user.latitude, user.longitude, prof.latitude, prof.longitude) < 100):
 			prof_set.append({"pk":prof.pk, "info_blurb":prof.info_blurb, \
 			"pic_url":'http://'+request.META['HTTP_HOST']+'/'+prof.photo.url})
@@ -64,10 +64,26 @@ def edit_info_blurb(request):
 	return HttpResponse(json_data, content_type="application/json")
 
 @csrf_exempt
+def change_status(request, username, status):
+	prof = Profile.objects.get(user__username = username)
+	print "the status from the url is ", status
+	if status == "disable":
+		prof.enabled = False
+		print "changed profile is_active to ", prof.user.is_active
+	elif status == "enable":
+		prof.enabled = True
+		print "changed profile is_active to ", prof.user.is_active
+	prof.save()
+	print "the current is_active is ", prof.user.is_active
+	json_data = json.dumps({"status": "success"})
+	return HttpResponse(json_data, content_type="application/json")
+
+@csrf_exempt
 def get_user_info(request, username):
 	prof = Profile.objects.get(user__username = username)
 	json_data = json.dumps({"pk":prof.pk, "info_blurb":prof.info_blurb, \
-		"pic_url":'http://'+request.META['HTTP_HOST']+'/'+prof.photo.url})
+		"pic_url":'http://'+request.META['HTTP_HOST']+'/'+prof.photo.url, \
+		"status":str(prof.enabled)})
 	return HttpResponse(json_data, content_type="application/json")
 
 @csrf_exempt
