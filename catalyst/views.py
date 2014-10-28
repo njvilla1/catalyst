@@ -145,7 +145,7 @@ def authenticate_user(request):
 	password1 = request.POST['password']
 	lat = request.POST['userLatitude']
 	longi = request.POST['userLongitude']
-	if User.objects.filter(username=username).count() == 0:
+	if User.objects.filter(username=username1).count() == 0:
 		return HttpResponse(json.dumps({"authentication": "does_not_exist"}), content_type="application/json")
 	user = authenticate(username=username1, password=password1)
 	authentication = ''
