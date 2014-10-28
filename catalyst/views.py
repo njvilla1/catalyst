@@ -145,6 +145,8 @@ def authenticate_user(request):
 	password1 = request.POST['password']
 	lat = request.POST['userLatitude']
 	longi = request.POST['userLongitude']
+	if User.objects.filter(username=username).count() == 0:
+		return HttpResponse(json.dumps({"authentication": "does_not_exist"}), content_type="application/json")
 	user = authenticate(username=username1, password=password1)
 	authentication = ''
 	if user is not None:
@@ -161,7 +163,6 @@ def authenticate_user(request):
 		# Return an 'invalid login' error message.
 		print "user was not found in database"
 		authentication = 'failure'
-	
 	#Set user latitude and longitude
 	prof = Profile.objects.get(user__username = username1)
 	prof.latitude = lat
